@@ -19,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -95,7 +96,7 @@ fun CityRow(city: String) {
 
 class CityRepository {
     // keep and create a mutable list of city names so that other classes cannot change it directly.
-    private val _cities = mutableListOf("Edmonton", "Vancouver", "Moscow", "Sydney", "Berlin", "Vienna", "Tokyo", "Beijing", "Osaka", "New Dehli")
+    private val _cities = mutableStateListOf<String>()
 
     // get a read only list for UI to display
     val cities: List<String>
