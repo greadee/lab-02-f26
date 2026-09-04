@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -43,6 +45,7 @@ class MainActivity : ComponentActivity() {
                     CityListScreen(
                         cities = cityRepository.cities,
                         onAddCity = { cityRepository.addCity(it)},
+                        onDeleteCity = { cityRepository.delCity(it) },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -53,17 +56,28 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun CityListScreen(
-    cities: List<String>, // cities list received from MainActivity
+    cities: List<String>,
     onAddCity: (String) -> Unit,
-    modifier: Modifier = Modifier // modifier allows layout information such as padding to be passed into this screen
+    onDeleteCity: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var newCityName by remember { mutableStateOf("") }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Row(modifier = Modifier.padding(16.dp)) {
+    ///////////////////////////////
+    var cityToDelete by remember { mutableStateOf<String?>(null) }
+    ///////////////////////////////
+
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+
+        Row(
+            modifier = Modifier.padding(16.dp)
+        ) {
+
             OutlinedTextField(
                 value = newCityName,
-                onValueChange = { newCityName = it},
+                onValueChange = { newCityName = it },
                 label = { Text("City Name") },
                 modifier = Modifier.weight(1f)
             )
@@ -77,17 +91,73 @@ fun CityListScreen(
                         newCityName = ""
                     }
                 }
-            ) { Text("Add City") }
+            ) {
+                Text("Add City")
+            }
         }
 
-        LazyColumn(modifier = modifier.fillMaxSize()) { // LAZY COLUMN MUST BE INSIDE OUTER COLUMN BLOCK AS NOT TO REGISTER AS TWO DIFFERENT COLUMN OBJECTS
-            items(cities) { city -> CityRow(city = city,
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(cities) { city ->
+
+                CityRow(
+                    city = city,
+                    ////////////////////////////////////
                     onClick = {
-                        // do something when this city is clicked
-                    })}
+                        cityToDelete = city // click functionality added was delete
+                    }
+                    ////////////////////////////////////
+                )
+            }
         }
     }
+
+    // DIALOG
+    ////////////////////////////////////
+    if (cityToDelete != null) {
+
+        AlertDialog(
+            onDismissRequest = {
+                cityToDelete = null
+            },
+
+            title = {
+                Text("Delete City")
+            },
+
+            text = {
+                Text("Are you sure you want to delete $cityToDelete?")
+            },
+
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        cityToDelete?.let {
+                            onDeleteCity(it)
+                        }
+
+                        cityToDelete = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        cityToDelete = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    /////////////////////////////////
 }
+
 
 @Composable
 fun CityRow(city: String, onClick: () -> Unit
@@ -111,4 +181,6 @@ class CityRepository {
         get() = _cities
 
     fun addCity(city: String) { _cities.add(city)}
+
+    fun delCity(city: String) {_cities.remove(city)}
 }

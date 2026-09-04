@@ -57,3 +57,185 @@ fun CityRow(city: String, onClick: () -> Unit
     )
 }
 ~~~
+
+## 3. Implementing the ability to delete CityList items
+### To start...
+Add a new delete function to the CityRepository class
+~~~
+fun delCity(city: String) {_cities.remove(city)}
+~~~
+Update the declaration for CityListScreen to include the onDeleteCity click listener
+~~~
+@Composable
+fun CityListScreen(
+    cities: List<String>,
+    onAddCity: (String) -> Unit,
+    onDeleteCity: (String) -> Unit, // !!!
+    modifier: Modifier = Modifier
+) {...}
+~~~
+Reflect the new declaration in the call for CityListScreen from MainActivity
+~~~
+setContent {
+            ListyCityTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    CityListScreen(
+                        cities = cityRepository.cities,
+                        onAddCity = { cityRepository.addCity(it)},
+                        onDeleteCity = { cityRepository.delCity(it) }, // !!!
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+        }
+~~~
+
+### Approach I: Persistent Delete Button
+Inside of CityListScreen, underneath `var newCityName by remember { mutableStateOf("") }` add:
+~~~
+var selectedCity by remember { mutableStateOf<String?>(null) }
+~~~
+ 
+ Then, LazyColumn can now use this new selectedCity list for containing the city currently under click.
+~~~
+LazyColumn(
+    modifier = Modifier.weight(1f)
+) {
+    items(cities) { city ->
+        CityRow(
+            city = city,
+            onClick = {
+                selectedCity = city // !!!
+            }
+        )
+    }
+}
+~~~
+
+~~~
+Button(
+    onClick = {
+        selectedCity?.let {
+            onDeleteCity(it) // !!!
+            selectedCity = null // !!!
+        }
+    },
+    enabled = selectedCity != null,
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)
+) {
+    Text("Delete City")
+}
+~~~
+
+### Approach II: OnClick Dialog
+Note: this approach uses new imports `AlertDialog` and `TextButton`.
+
+
+CityListScreen becomes... 
+~~~
+@Composable
+fun CityListScreen(
+    cities: List<String>,
+    onAddCity: (String) -> Unit,
+    onDeleteCity: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var newCityName by remember { mutableStateOf("") }
+    
+    ///////////////////////////////
+    var cityToDelete by remember { mutableStateOf<String?>(null) }
+    ///////////////////////////////
+    
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+
+        Row(
+            modifier = Modifier.padding(16.dp)
+        ) {
+
+            OutlinedTextField(
+                value = newCityName,
+                onValueChange = { newCityName = it },
+                label = { Text("City Name") },
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = {
+                    if (newCityName.isNotBlank()) {
+                        onAddCity(newCityName)
+                        newCityName = ""
+                    }
+                }
+            ) {
+                Text("Add City")
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(cities) { city ->
+
+                CityRow(
+                    city = city,
+                    ////////////////////////////////////
+                    onClick = {
+                        cityToDelete = city // click functionality added was delete
+                    }
+                    ////////////////////////////////////
+                )
+            }
+        }
+    }
+
+    // DIALOG
+    ////////////////////////////////////
+    if (cityToDelete != null) {
+
+        AlertDialog(
+            onDismissRequest = {
+                cityToDelete = null
+            },
+
+            title = {
+                Text("Delete City")
+            },
+
+            text = {
+                Text("Are you sure you want to delete $cityToDelete?")
+            },
+
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        cityToDelete?.let {
+                            onDeleteCity(it)
+                        }
+
+                        cityToDelete = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        cityToDelete = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    /////////////////////////////////
+}
+~~~
