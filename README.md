@@ -10,8 +10,39 @@ Gets replaced with the following line.
 val _cities = mutableStateListOf<String>()
 ~~~
 
+We can add objects to both a mutableList and a mustableStateList, but a mutableList will not be able to notify of a dataset change, while a mutableStateList will.
+
 ## 2. Making the CityList items clickable 
 ### I.
+First, we must add a click listener `onClick` to the `CityRow` function so that each row of our list can be clicked.
+~~~
+@Composable 
+fun CityRow(city: String) { 
+    Text( 
+        text = city, 
+        fontSize = 28.sp, 
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 14.dp) ) }
+~~~
+Adding a click listener to the CityRow function.
+~~~
+@Composable
+fun CityRow(city: String, onClick: () -> Unit
+) {
+    Text(
+        text = city, 
+        fontSize = 28.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 18.dp, vertical = 14.dp)
+    )
+}
+~~~
+
+### II.
+We now have to update the `CityRow()` declaration inside `LazyColumn()` to include the new `onClick` parameter.
 ~~~
 LazyColumn(modifier = modifier.fillMaxSize()) {
     items(cities) { city -> 
@@ -29,32 +60,6 @@ LazyColumn(modifier = modifier.fillMaxSize()) {
             }
         )
     }
-}
-~~~
-### II.
-~~~
-@Composable 
-fun CityRow(city: String) { 
-    Text( 
-        text = city, 
-        fontSize = 28.sp, 
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 14.dp) ) }
-~~~
-Adding a click listener to the CityRow function.
-~~~
-@Composable
-fun CityRow(city: String, onClick: () -> Unit
-) {
-    Text(
-        text = city,
-        fontSize = 28.sp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = 18.dp, vertical = 14.dp)
-    )
 }
 ~~~
 
@@ -75,6 +80,7 @@ fun CityListScreen(
 ) {...}
 ~~~
 Reflect the new declaration in the call for CityListScreen from MainActivity
+- Note: `it` is the kotlin keyword for the parameter specified in a lambda function
 ~~~
 setContent {
             ListyCityTheme {
